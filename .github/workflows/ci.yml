@@ -1,0 +1,73 @@
+name: Verify approval engine
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: flowops
+          POSTGRES_PASSWORD: flowops-ci-only
+          POSTGRES_DB: flowops
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U flowops"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      APP_ENV: local
+      APP_DEBUG: 'false'
+      APP_URL: http://127.0.0.1:8011
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: flowops
+      DB_USERNAME: flowops
+      DB_PASSWORD: flowops-ci-only
+      SESSION_DRIVER: database
+      SESSION_ENCRYPT: 'true'
+      SANCTUM_STATEFUL_DOMAINS: 127.0.0.1:5173,127.0.0.1:8011
+      FLOWOPS_DEMO_MODE: 'true'
+      CACHE_STORE: file
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            apps/web/package-lock.json
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, mbstring, intl, zip
+          coverage: none
+      - name: Prepare application and isolated test database
+        run: |
+          cp apps/api/.env.example apps/api/.env
+          cp apps/api/.env.example apps/api/.env.testing
+          echo "APP_KEY=$(php -r 'echo "base64:".base64_encode(random_bytes(32));')" >> "$GITHUB_ENV"
+          PGPASSWORD=flowops-ci-only createdb -h 127.0.0.1 -U flowops flowops_test
+          composer install --working-dir=apps/api --no-interaction --prefer-dist
+          npm ci
+          npm --prefix apps/web ci
+          php apps/api/artisan migrate --seed --force
+      - name: Unit, integration, concurrency, and build checks
+        run: npm test
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Exercise real browser journeys
+        run: |
+          npm run dev > /tmp/flowops-dev.log 2>&1 &
+          for attempt in $(seq 1 30); do curl -fsS http://127.0.0.1:5173/ > /dev/null && break || sleep 1; done
+          npm run test:e2e

@@ -1,0 +1,19 @@
+{
+  "name": "flowops-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "npm --prefix apps/web run dev",
+    "test:api": "node scripts/test-api.mjs",
+    "test": "node scripts/check.mjs",
+    "build": "npm --prefix apps/web run build",
+    "test:web": "npm --prefix apps/web run test",
+    "test:e2e": "playwright test",
+    "test:concurrency": "node tests/concurrency.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}
