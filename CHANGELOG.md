@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### CI fixes
+
+- Isolated the API test process from inherited application database, cache, and session settings.
+- Masked the temporary CI application key in workflow logs.
+
 ### Implemented first release
 
 - Added the React JavaScript workspace and Laravel purchase approval API.

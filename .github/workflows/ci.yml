@@ -56,7 +56,9 @@ jobs:
         run: |
           cp apps/api/.env.example apps/api/.env
           cp apps/api/.env.example apps/api/.env.testing
-          echo "APP_KEY=$(php -r 'echo "base64:".base64_encode(random_bytes(32));')" >> "$GITHUB_ENV"
+          app_key="$(php -r 'echo "base64:".base64_encode(random_bytes(32));')"
+          echo "::add-mask::$app_key"
+          echo "APP_KEY=$app_key" >> "$GITHUB_ENV"
           PGPASSWORD=flowops-ci-only createdb -h 127.0.0.1 -U flowops flowops_test
           composer install --working-dir=apps/api --no-interaction --prefer-dist
           npm ci
