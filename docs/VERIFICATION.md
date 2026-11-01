@@ -29,13 +29,13 @@ The commands are:
 - Composer validation and Laravel Pint formatting.
 - Local Markdown link and source-language checks.
 
-## Concurrency evidence
-
 ## Hosted CI environment isolation
 
 The first GitHub Actions run on 1 November 2026 exposed application database settings inherited by the API test process. The test database guard correctly refused to run against that configuration.
 
 The test launcher now explicitly selects PostgreSQL, `flowops_test`, an empty database URL override, and array-backed cache/session drivers before Artisan starts. The database guard remains unchanged. A local regression run with inherited application settings passed all 24 API tests and 121 assertions.
+
+[Hosted CI run 41305834915](https://github.com/fitrirusli/flowops/actions/runs/41305834915) passed on 1 November 2026 for application commit `9a13437`, including API tests, JavaScript tests, real PostgreSQL concurrency scenarios, the production build, and all browser journeys.
 
 The latest hosted result is available in [GitHub Actions](https://github.com/fitrirusli/flowops/actions/workflows/ci.yml).
 
